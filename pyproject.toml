@@ -1,0 +1,14 @@
+[project]
+name = "machine-learning-challenge"
+version = "0.1.0"
+description = "Property price prediction pipeline and API"
+readme = "README.md"
+authors = [
+    {  name = "Nicole Sarvasi", email = "nicolesarvasi@hotmail.com"}
+]
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "pandas",
+  "scikit-learn",
+  "category_encoders",
+]
