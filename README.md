@@ -13,7 +13,7 @@ This project productionizes a Jupyter notebook into a deployable ML solution. Th
 ```bash
 # Install dependencies using UV
 uv sync
-
+```
 
 ## Technical Requirements
 
@@ -22,7 +22,3 @@ uv sync
 - API documentation (FastAPI recommended)
 - Basic security (API keys)
 - Database abstraction for future integration
-
-## Development
-
-This project follows the requirements outlined in `Challenge.md` to transform the research notebook into a production-ready system with proper software engineering practices.
