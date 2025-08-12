@@ -1,5 +1,7 @@
 import sys
 import os
+import joblib
+from pathlib import Path
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
@@ -33,6 +35,18 @@ def main():
     
     print("Evaluation metrics:")
     print_metrics(test_predictions, test_target)
+    
+    # Save model for API
+    print("Saving model...")
+    model_path = Path("models/property_model.joblib")
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    model_data = {
+        'model': trained_pipeline,
+        'feature_columns': train_cols
+    }
+    joblib.dump(model_data, model_path)
+    print(f"Model saved to {model_path}")
 
 
 if __name__ == "__main__":
