@@ -11,4 +11,8 @@ dependencies = [
   "pandas",
   "scikit-learn",
   "category_encoders",
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "joblib",
 ]
