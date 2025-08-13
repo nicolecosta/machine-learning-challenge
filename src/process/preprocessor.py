@@ -8,7 +8,7 @@ logger = logging.getLogger("property-api.preprocessor")
 
 def get_feature_columns(df_columns: List[str]) -> List[str]:
     try:
-        excluded_cols = ['id', 'target']
+        excluded_cols = ['id', 'target', 'price']
         feature_cols = [col for col in df_columns if col not in excluded_cols]
         
         if not feature_cols:

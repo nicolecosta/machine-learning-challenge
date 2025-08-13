@@ -6,12 +6,14 @@ from pathlib import Path
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
-from process.data_loader import load_data
+from process.data_sources import create_data_source
 from process.preprocessor import get_feature_columns, create_preprocessor
 from train.trainer import create_model_pipeline, train_model
 from predict.predictor import make_predictions
 from predict.evaluator import print_metrics
-from config import CATEGORICAL_COLS, TARGET_COL, DEFAULT_TRAIN_PATH, DEFAULT_TEST_PATH
+from config import (CATEGORICAL_COLS, TARGET_COL, DATA_SOURCE_TYPE, 
+                   DEFAULT_TRAIN_PATH, DEFAULT_TEST_PATH, DATABASE_URL, 
+                   TRAIN_QUERY, TEST_QUERY)
 
 logger = logging.getLogger("property-api.training")
 
@@ -21,7 +23,19 @@ def main():
         logger.info("Starting model training pipeline")
         
         logger.info("Loading data...")
-        train, test = load_data(DEFAULT_TRAIN_PATH, DEFAULT_TEST_PATH)
+        if DATA_SOURCE_TYPE.lower() == 'csv':
+            data_source = create_data_source('csv', 
+                                           train_path=DEFAULT_TRAIN_PATH, 
+                                           test_path=DEFAULT_TEST_PATH)
+        elif DATA_SOURCE_TYPE.lower() == 'sql':
+            data_source = create_data_source('sql',
+                                           connection_string=DATABASE_URL,
+                                           train_query=TRAIN_QUERY,
+                                           test_query=TEST_QUERY)
+        else:
+            raise ValueError(f"Unsupported data source type: {DATA_SOURCE_TYPE}")
+        
+        train, test = data_source.load_training_data()
         
         logger.info("Preparing features...")
         train_cols = get_feature_columns(train.columns)

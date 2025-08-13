@@ -1,4 +1,5 @@
 from typing import List, Dict, Any
+import os
 
 CATEGORICAL_COLS: List[str] = ["type", "sector"]
 TARGET_COL: str = "price"
@@ -11,5 +12,12 @@ DEFAULT_MODEL_PARAMS: Dict[str, Any] = {
     "loss": "absolute_error"
 }
 
+DATA_SOURCE_TYPE: str = os.getenv("DATA_SOURCE_TYPE", "csv")
+
 DEFAULT_TRAIN_PATH: str = "data/train.csv"
 DEFAULT_TEST_PATH: str = "data/test.csv"
+
+DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+
+TRAIN_QUERY: str = os.getenv("TRAIN_QUERY", "SELECT * FROM properties WHERE dataset_type = 'train'")
+TEST_QUERY: str = os.getenv("TEST_QUERY", "SELECT * FROM properties WHERE dataset_type = 'test'")
