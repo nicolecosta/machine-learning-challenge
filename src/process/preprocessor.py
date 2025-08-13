@@ -1,9 +1,12 @@
 from category_encoders import TargetEncoder
 from sklearn.compose import ColumnTransformer
 import logging
+import os
 from typing import List
 
 logger = logging.getLogger("property-api.preprocessor")
+
+RANDOM_STATE = int(os.getenv("RANDOM_STATE", "42"))
 
 
 def get_feature_columns(df_columns: List[str]) -> List[str]:
@@ -35,7 +38,8 @@ def create_preprocessor(categorical_cols: List[str]) -> ColumnTransformer:
             ]
         )
         
-        logger.info("Preprocessor created for %d categorical columns", len(categorical_cols))
+        logger.info("Preprocessor created for %d categorical columns (using global random state)", 
+                   len(categorical_cols))
         return preprocessor
         
     except Exception as e:

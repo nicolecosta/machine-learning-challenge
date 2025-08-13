@@ -3,20 +3,25 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.compose import ColumnTransformer
 import pandas as pd
 import logging
+import os
 from typing import Dict, Any
 
 logger = logging.getLogger("property-api.trainer")
+
+RANDOM_STATE = int(os.getenv("RANDOM_STATE", "42"))
+DEFAULT_MODEL_PARAMS = {
+    "learning_rate": 0.01,
+    "n_estimators": 300,
+    "max_depth": 5,
+    "loss": "absolute_error",
+    "random_state": RANDOM_STATE
+}
 
 
 def create_model_pipeline(preprocessor: ColumnTransformer, 
                          model_params: Dict[str, Any] = None) -> Pipeline:
     if model_params is None:
-        model_params = {
-            "learning_rate": 0.01,
-            "n_estimators": 300,
-            "max_depth": 5,
-            "loss": "absolute_error"
-        }
+        model_params = DEFAULT_MODEL_PARAMS.copy()
     
     try:
         steps = [
@@ -25,7 +30,8 @@ def create_model_pipeline(preprocessor: ColumnTransformer,
         ]
         
         pipeline = Pipeline(steps)
-        logger.info("Model pipeline created successfully")
+        logger.info("Model pipeline created successfully with random_state=%s", 
+                   model_params.get('random_state', 'not set'))
         return pipeline
         
     except Exception as e:

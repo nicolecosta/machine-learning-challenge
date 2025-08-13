@@ -2,10 +2,12 @@ import sys
 import os
 import joblib
 import logging
+import numpy as np
 from pathlib import Path
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
+from config import RANDOM_STATE
 from process.data_sources import create_data_source
 from process.preprocessor import get_feature_columns, create_preprocessor
 from train.trainer import create_model_pipeline, train_model
@@ -18,8 +20,17 @@ from config import (CATEGORICAL_COLS, TARGET_COL, DATA_SOURCE_TYPE,
 logger = logging.getLogger("property-api.training")
 
 
+def set_random_seeds(seed: int = RANDOM_STATE):
+    """Set random seeds for reproducibility across all libraries."""
+    np.random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    logger.info("Random seeds set to %d for reproducibility", seed)
+
+
 def main():
     try:
+        set_random_seeds()
+        
         logger.info("Starting model training pipeline")
         
         logger.info("Loading data...")

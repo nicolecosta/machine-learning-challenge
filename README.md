@@ -95,6 +95,18 @@ uv sync --extra sql
 uv run python src/main.py
 ```
 
+## Reproducibility
+
+This pipeline ensures identical results across different runs using:
+- Fixed random seeds (`RANDOM_STATE=42`)
+- Pinned dependency versions
+- Deterministic data processing
+
+Test reproducibility:
+```bash
+uv run python test_reproducibility.py
+```
+
 ## Docker Deployment
 
 ### Build and Run

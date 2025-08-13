@@ -1,6 +1,8 @@
 from typing import List, Dict, Any
 import os
 
+RANDOM_STATE: int = int(os.getenv("RANDOM_STATE", "42"))
+
 CATEGORICAL_COLS: List[str] = ["type", "sector"]
 TARGET_COL: str = "price"
 ID_COLS: List[str] = ["id", "target"]
@@ -9,7 +11,8 @@ DEFAULT_MODEL_PARAMS: Dict[str, Any] = {
     "learning_rate": 0.01,
     "n_estimators": 300,
     "max_depth": 5,
-    "loss": "absolute_error"
+    "loss": "absolute_error",
+    "random_state": RANDOM_STATE
 }
 
 DATA_SOURCE_TYPE: str = os.getenv("DATA_SOURCE_TYPE", "csv")

@@ -35,6 +35,11 @@ class CSVDataSource(DataSource):
         if train.empty or test.empty:
             raise ValueError("One or more datasets are empty")
         
+        if 'id' in train.columns:
+            train = train.sort_values('id').reset_index(drop=True)
+        if 'id' in test.columns:
+            test = test.sort_values('id').reset_index(drop=True)
+        
         logger.info("CSV data loaded - Train: %d rows, Test: %d rows", len(train), len(test))
         return train, test
 
