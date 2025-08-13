@@ -178,19 +178,19 @@ sql = [
 
 [package.metadata]
 requires-dist = [
-    { name = "category-encoders" },
-    { name = "fastapi" },
-    { name = "joblib" },
-    { name = "numpy" },
-    { name = "pandas" },
+    { name = "category-encoders", specifier = "==2.8.1" },
+    { name = "fastapi", specifier = "==0.116.1" },
+    { name = "joblib", specifier = "==1.5.1" },
+    { name = "numpy", specifier = "==2.3.2" },
+    { name = "pandas", specifier = "==2.3.1" },
     { name = "psycopg2-binary", marker = "extra == 'sql'" },
-    { name = "pydantic" },
+    { name = "pydantic", specifier = "==2.11.7" },
     { name = "pymysql", marker = "extra == 'mysql'" },
-    { name = "requests" },
-    { name = "scikit-learn" },
+    { name = "requests", specifier = "==2.32.4" },
+    { name = "scikit-learn", specifier = "==1.7.1" },
     { name = "sqlalchemy", marker = "extra == 'mysql'" },
     { name = "sqlalchemy", marker = "extra == 'sql'" },
-    { name = "uvicorn" },
+    { name = "uvicorn", specifier = "==0.35.0" },
 ]
 provides-extras = ["sql", "mysql"]
 
