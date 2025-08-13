@@ -2,7 +2,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.compose import ColumnTransformer
 import pandas as pd
+import logging
 from typing import Dict, Any
+
+logger = logging.getLogger("property-api.trainer")
 
 
 def create_model_pipeline(preprocessor: ColumnTransformer, 
@@ -15,15 +18,41 @@ def create_model_pipeline(preprocessor: ColumnTransformer,
             "loss": "absolute_error"
         }
     
-    steps = [
-        ('preprocessor', preprocessor),
-        ('model', GradientBoostingRegressor(**model_params))
-    ]
-    
-    pipeline = Pipeline(steps)
-    return pipeline
+    try:
+        steps = [
+            ('preprocessor', preprocessor),
+            ('model', GradientBoostingRegressor(**model_params))
+        ]
+        
+        pipeline = Pipeline(steps)
+        logger.info("Model pipeline created successfully")
+        return pipeline
+        
+    except Exception as e:
+        logger.error("Error creating model pipeline: %s", str(e))
+        raise ValueError(f"Failed to create model pipeline: {str(e)}")
 
 
 def train_model(pipeline: Pipeline, X_train: pd.DataFrame, y_train: pd.Series) -> Pipeline:
-    pipeline.fit(X_train, y_train)
-    return pipeline
+    try:
+        if X_train.empty or y_train.empty:
+            raise ValueError("Training data is empty")
+        
+        if len(X_train) != len(y_train):
+            raise ValueError("Feature and target data have different lengths")
+        
+        if y_train.isnull().any():
+            raise ValueError("Target data contains null values")
+        
+        logger.info("Starting model training with %d samples", len(X_train))
+        pipeline.fit(X_train, y_train)
+        logger.info("Model training completed successfully")
+        
+        return pipeline
+        
+    except ValueError as e:
+        logger.error("Training validation error: %s", str(e))
+        raise
+    except Exception as e:
+        logger.error("Unexpected training error: %s", str(e))
+        raise RuntimeError(f"Model training failed: {str(e)}")

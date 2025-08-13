@@ -1,16 +1,36 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from typing import Literal
 
 
 class PropertyFeatures(BaseModel):
     type: Literal["casa", "departamento"] = Field(..., example="casa")
     sector: Literal["la reina", "las condes", "lo barnechea", "nunoa", "providencia", "vitacura"] = Field(..., example="las condes")
-    net_usable_area: float = Field(..., example=140.0, gt=0.0)
-    net_area: float = Field(..., example=170.0, gt=0.0)
-    n_rooms: float = Field(..., example=3.0, ge=0.0)
-    n_bathroom: float = Field(..., example=2.0, ge=0.0)
-    latitude: float = Field(..., example=-33.40123)
-    longitude: float = Field(..., example=-70.58056)
+    net_usable_area: float = Field(..., example=140.0, gt=0.0, le=10000.0)
+    net_area: float = Field(..., example=170.0, gt=0.0, le=10000.0)
+    n_rooms: float = Field(..., example=3.0, ge=0.0, le=20.0)
+    n_bathroom: float = Field(..., example=2.0, ge=0.0, le=20.0)
+    latitude: float = Field(..., example=-33.40123, ge=-90.0, le=90.0)
+    longitude: float = Field(..., example=-70.58056, ge=-180.0, le=180.0)
+    
+    @field_validator('latitude')
+    @classmethod
+    def validate_latitude_chile_range(cls, v: float) -> float:
+        if not (-56.0 <= v <= -17.0):
+            raise ValueError('latitude must be within Chilean territory range')
+        return v
+    
+    @field_validator('longitude')
+    @classmethod
+    def validate_longitude_chile_range(cls, v: float) -> float:
+        if not (-81.0 <= v <= -66.0):
+            raise ValueError('longitude must be within Chilean territory range')
+        return v
+    
+    @model_validator(mode='after')
+    def validate_areas(self) -> 'PropertyFeatures':
+        if self.net_usable_area > self.net_area:
+            raise ValueError('net_usable_area cannot be greater than net_area')
+        return self
     
     model_config = ConfigDict(
         json_schema_extra={

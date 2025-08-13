@@ -24,20 +24,40 @@ class ModelManager:
     def load_model(self) -> bool:
         try:
             if not self._model_path.exists():
-                logger.error("Model file not found at: %s", self._model_path)
+                logger.error("Model file not found")
                 self.is_loaded = False
                 return False
                 
-            logger.info("Loading existing model...")
+            logger.info("Loading machine learning model...")
             data = joblib.load(self._model_path)
+            
+            if not isinstance(data, dict) or 'model' not in data or 'feature_columns' not in data:
+                logger.error("Invalid model file format - missing required keys")
+                self.is_loaded = False
+                return False
+            
             self.model = data['model']
             self.feature_columns = data['feature_columns']
+            
+            if not hasattr(self.model, 'predict'):
+                logger.error("Loaded object does not have predict method")
+                self.is_loaded = False
+                return False
+                
             self.is_loaded = True
             logger.info("Model loaded successfully - Features: %d", len(self.feature_columns))
             return True
             
+        except FileNotFoundError:
+            logger.error("Model file not found")
+            self.is_loaded = False
+            return False
+        except (joblib.externals.loky.process_executor.TerminatedWorkerError, EOFError):
+            logger.error("Model file appears to be corrupted")
+            self.is_loaded = False
+            return False
         except Exception as e:
-            logger.error("Model loading failed: %s", e)
+            logger.error("Unexpected error loading model: %s", str(e))
             self.is_loaded = False
             return False
     
@@ -48,8 +68,45 @@ class ModelManager:
                 detail="Model not available"
             )
         
-        prediction = self.model.predict(features_df)[0]
-        return float(prediction)
+        try:
+            if features_df.empty:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Empty input data"
+                )
+            
+            missing_cols = set(self.feature_columns) - set(features_df.columns)
+            if missing_cols:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing required columns: {list(missing_cols)}"
+                )
+            
+            features_df = features_df[self.feature_columns]
+            prediction = self.model.predict(features_df)[0]
+            
+            if not isinstance(prediction, (int, float)) or pd.isna(prediction):
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Invalid prediction result"
+                )
+            
+            return float(prediction)
+            
+        except HTTPException:
+            raise
+        except ValueError as e:
+            logger.error("Input validation error: %s", str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid input data format"
+            )
+        except Exception as e:
+            logger.error("Prediction error: %s", str(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Prediction failed"
+            )
 
 model_manager = ModelManager()
 
@@ -89,12 +146,23 @@ async def predict_property_price(
     api_key: str = Depends(get_api_key)
 ):
     try:
-        logger.info("Prediction request received")
+        logger.info("Prediction request received for property type: %s, sector: %s", 
+                   features.type, features.sector)
+        
+        # Pydantic validation handles all input validation automatically
+        # No need for manual validation here
         
         df = pd.DataFrame([features.dict()])
         predicted_price = model_manager.predict(df)
         
-        logger.info("Prediction successful")
+        if predicted_price <= 0:
+            logger.warning("Unusual prediction result: %f", predicted_price)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid prediction result - please check input values"
+            )
+        
+        logger.info("Prediction successful: %f", predicted_price)
         
         return PredictionResponse(
             predicted_price=predicted_price,
@@ -102,14 +170,14 @@ async def predict_property_price(
             model_version="v1.0"
         )
         
-    except HTTPException:
-        logger.warning("Authentication failed")
+    except HTTPException as e:
+        logger.warning("HTTP exception in prediction: %s", e.detail)
         raise
     except Exception as e:
-        logger.error("Prediction error: %s", e)
+        logger.error("Unexpected prediction error: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail="Prediction failed"
+            detail="Internal server error"
         )
 
 
