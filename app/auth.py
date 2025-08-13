@@ -1,8 +1,11 @@
 import os
 import secrets
+import logging
 from typing import Optional
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
+
+logger = logging.getLogger("property-api.auth")
 
 api_key_header = APIKeyHeader(
     name="X-API-Key",
@@ -12,6 +15,7 @@ api_key_header = APIKeyHeader(
 
 def get_api_key(api_key: Optional[str] = Security(api_key_header)) -> str:
     if not api_key:
+        logger.warning("Authentication failed: API key missing")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="API key required in X-API-Key header",
@@ -20,12 +24,14 @@ def get_api_key(api_key: Optional[str] = Security(api_key_header)) -> str:
     
     valid_api_key = os.getenv("API_KEY")
     if not valid_api_key:
+        logger.error("Authentication service error: API_KEY environment variable not set")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Authentication service temporarily unavailable"
         )
     
     if not secrets.compare_digest(api_key, valid_api_key):
+        logger.warning("Authentication failed: Invalid API key provided")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key",

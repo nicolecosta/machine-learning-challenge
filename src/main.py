@@ -1,6 +1,7 @@
 import sys
 import os
 import joblib
+import logging
 from pathlib import Path
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
@@ -12,32 +13,33 @@ from predict.predictor import make_predictions
 from predict.evaluator import print_metrics
 from config import CATEGORICAL_COLS, TARGET_COL, DEFAULT_TRAIN_PATH, DEFAULT_TEST_PATH
 
+logger = logging.getLogger("property-api.training")
+
 
 def main():
-    print("Loading data...")
+    logger.info("Loading data...")
     train, test = load_data(DEFAULT_TRAIN_PATH, DEFAULT_TEST_PATH)
     
-    print("Preparing features...")
+    logger.info("Preparing features...")
     train_cols = get_feature_columns(train.columns)
     
-    print("Creating preprocessor...")
+    logger.info("Creating preprocessor...")
     preprocessor = create_preprocessor(CATEGORICAL_COLS)
     
-    print("Creating model pipeline...")
+    logger.info("Creating model pipeline...")
     pipeline = create_model_pipeline(preprocessor)
     
-    print("Training model...")
+    logger.info("Training model...")
     trained_pipeline = train_model(pipeline, train[train_cols], train[TARGET_COL])
     
-    print("Making predictions...")
+    logger.info("Making predictions...")
     test_predictions = make_predictions(trained_pipeline, test[train_cols])
     test_target = test[TARGET_COL].values
     
-    print("Evaluation metrics:")
+    logger.info("Evaluation metrics:")
     print_metrics(test_predictions, test_target)
     
-    # Save model for API
-    print("Saving model...")
+    logger.info("Saving model...")
     model_path = Path("models/property_model.joblib")
     model_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -46,8 +48,9 @@ def main():
         'feature_columns': train_cols
     }
     joblib.dump(model_data, model_path)
-    print(f"Model saved to {model_path}")
+    logger.info("Model saved to %s", model_path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()

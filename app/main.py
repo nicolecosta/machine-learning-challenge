@@ -11,7 +11,7 @@ from .auth import get_api_key
 from .schemas import PropertyFeatures, PredictionResponse, HealthResponse
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("property-api")
 
 
 class ModelManager:
@@ -24,7 +24,7 @@ class ModelManager:
     def load_model(self) -> bool:
         try:
             if not self._model_path.exists():
-                logger.error(f"Model file not found at: {self._model_path}")
+                logger.error("Model file not found at: %s", self._model_path)
                 self.is_loaded = False
                 return False
                 
@@ -33,11 +33,11 @@ class ModelManager:
             self.model = data['model']
             self.feature_columns = data['feature_columns']
             self.is_loaded = True
-            logger.info("Model loaded successfully")
+            logger.info("Model loaded successfully - Features: %d", len(self.feature_columns))
             return True
             
         except Exception as e:
-            logger.error(f"Model loading failed: {e}")
+            logger.error("Model loading failed: %s", e)
             self.is_loaded = False
             return False
     
@@ -89,12 +89,12 @@ async def predict_property_price(
     api_key: str = Depends(get_api_key)
 ):
     try:
-        logger.info(f"Prediction request for {features.type} in {features.sector}")
+        logger.info("Prediction request received")
         
         df = pd.DataFrame([features.dict()])
         predicted_price = model_manager.predict(df)
         
-        logger.info(f"Predicted price: {predicted_price:,.0f} CLP")
+        logger.info("Prediction successful")
         
         return PredictionResponse(
             predicted_price=predicted_price,
@@ -103,9 +103,10 @@ async def predict_property_price(
         )
         
     except HTTPException:
+        logger.warning("Authentication failed")
         raise
     except Exception as e:
-        logger.error(f"Prediction error: {e}")
+        logger.error("Prediction error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail="Prediction failed"
