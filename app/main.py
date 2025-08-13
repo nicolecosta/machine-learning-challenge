@@ -188,24 +188,3 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs"
     }
-
-
-def start_server():
-    """CLI entry point for starting the API server."""
-    import uvicorn
-    import os
-    
-    api_key = os.getenv("API_KEY")
-    if not api_key:
-        print("⚠️  Warning: API_KEY environment variable not set")
-        print("   Set it with: export API_KEY=your-secret-key")
-    
-    print("🚀 Starting Property Friends API...")
-    print("📖 API docs will be available at: http://localhost:8000/docs")
-    
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=False
-    )
